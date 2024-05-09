@@ -9,18 +9,7 @@ jobs:
       matrix:
         board:
           # Alphabetical order
-          - 'metro_m0'
-          - 'hallowing'
-          - 'circuitplayground_m0'
-          - 'metro_m4'
-          - 'pybadge_m4'
-          - 'pygamer_m4'
-          - 'hallowing_m4'
-          - 'pyportal_m4'
-          - 'pyportal_m4_titano'
-          - 'feather_m4_can'
-          - 'metro_m0:usbstack=tinyusb'
-          - 'metro_m4:speed=120,usbstack=tinyusb'
+          - 'samd51p20a'
 
     runs-on: ubuntu-latest
     
