@@ -1,6 +1,6 @@
 *.bz2
 *.atsuo
-
+.vs
 bootloaders/*/build/
 *~
 /libraries/**/build/
