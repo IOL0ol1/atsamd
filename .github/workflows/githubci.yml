@@ -48,7 +48,7 @@ jobs:
     - name: Install BSP and Libraries
       env:
         BSP_URL: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
-        BSP_PATH: .arduino15/packages/adafruit/hardware/samd
+        BSP_PATH: .arduino15/packages/atmel/hardware/samd
       run: |
         arduino-cli config init
         arduino-cli core update-index
