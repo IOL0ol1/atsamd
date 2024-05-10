@@ -30,6 +30,20 @@ def parse_html(html_content):
     
     return result
 
+def clean_folders(base_folder):
+    # 遍历base_folder下的每个子文件夹
+    for root, dirs, files in os.walk(base_folder):
+        # 检查当前文件夹中是否有'include'文件夹
+        if 'include' in dirs: 
+            # 遍历当前文件夹下的所有子文件夹
+            for dir in dirs:
+                if dir not in ['gcc', 'include']:
+                    # 构造完整的文件夹路径
+                    full_dir_path = os.path.join(root, dir)
+                    # 删除不是'gcc'或'include'的文件夹
+                    shutil.rmtree(full_dir_path)
+                    print(f"deleted folder: {full_dir_path}")
+                    
 def download_and_extract(url, output_dir, cache='./cache'):
     # 发送请求
     response = requests.get(url)
@@ -52,14 +66,19 @@ def download_and_extract(url, output_dir, cache='./cache'):
             if not os.path.exists(atpack_path):
                 with open(atpack_path, 'wb') as f:
                     f.write(requests.get(download_url).content)
+                    
             
-            matched = re.search(r'^Atmel\.(.*?)\.', atpack_filename)
-            series = matched.group(1);
+            series = re.search(r'^Atmel\.(.*?)\.', atpack_filename).group(1)
+            version = re.search(r"DFP\.(\d+\.\d+\.\d+)(?:\.atpack)?", atpack_filename).group(1)
             # 解压到指定目录的同名文件夹下
             with zipfile.ZipFile(atpack_path, 'r') as zip_ref:
-                zip_ref.extractall(os.path.join(output_dir, series))
+                series_dir = os.path.join(output_dir, series, version)
+                os.makedirs(series_dir,exist_ok=True)
+                zip_ref.extractall(series_dir)
+                print(f"create folder: {series_dir}")
  
 def generate_header(input_dir,output_dir):
+    #clean_folders(input_dir)
     print(input_dir)
 
 
@@ -77,4 +96,4 @@ if __name__ == "__main__":
     temp_dir = "./temp"
     download_and_extract(args.url, temp_dir)
     generate_header(temp_dir, args.output_dir)
-    shutil.rmtree(temp_dir)
+    #shutil.rmtree(temp_dir)
