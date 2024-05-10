@@ -22,9 +22,9 @@ menu.usbstack=USB Stack
 menu.debug=Debug
 
 # -----------------------------------
-# SAMD51P20A
+# Atmel SAMD51P20A
 # -----------------------------------
-samd51p20a.name=SAMD51P20A
+samd51p20a.name=Atmel SAMD51P20A
 
 # VID/PID for Bootloader, Arduino & CircuitPython
 samd51p20a.vid.0=0x239A
