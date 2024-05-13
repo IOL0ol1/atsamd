@@ -1,4 +1,5 @@
-﻿from glob import iglob
+﻿import argparse
+from glob import iglob
 import json
 import requests
 import os
@@ -67,6 +68,7 @@ def download_and_extract(url, output_dir, cache='./cache'):
             # 如果文件不存在则下载
             if not os.path.exists(atpack_path):
                 with open(atpack_path, 'wb') as f:
+                    print(f"download file: {download_url}")
                     f.write(requests.get(download_url).content)
                     
             
@@ -132,20 +134,20 @@ def get_all_devices(folder):
 if __name__ == "__main__":
     
   
+    parser = argparse.ArgumentParser(description='Download and extract files from a webpage.')
+    parser.add_argument('--url', help='URL of the webpage to scrape', default='http://packs.download.atmel.com/')
+    parser.add_argument('--output-dir', help='Output directory for extracted files', default='./Atmel')
+    parser.add_argument('--cache', help='Web download cache', default='./cache')
+    args = parser.parse_args()
+    
+    # 检查输出目录是否存在，如果不存在则创建
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    
+    temp_dir = "./temp"
+    download_and_extract(args.url, temp_dir)
+    generate_header(temp_dir, args.output_dir)
     a = get_all_devices('./temp')
     with open("data.json", "w") as file:
         file.write(json.dumps(a))
-    # parser = argparse.ArgumentParser(description='Download and extract files from a webpage.')
-    # parser.add_argument('--url', help='URL of the webpage to scrape', default='http://packs.download.atmel.com/')
-    # parser.add_argument('--output-dir', help='Output directory for extracted files', default='./Atmel')
-    # parser.add_argument('--cache', help='Web download cache', default='./cache')
-    # args = parser.parse_args()
-    
-    # # 检查输出目录是否存在，如果不存在则创建
-    # if not os.path.exists(args.output_dir):
-    #     os.makedirs(args.output_dir)
-    
-    # temp_dir = "./temp"
-    # download_and_extract(args.url, temp_dir)
-    # generate_header(temp_dir, args.output_dir)
     #shutil.rmtree(temp_dir)
