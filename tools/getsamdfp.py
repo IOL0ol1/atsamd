@@ -36,6 +36,12 @@ def parse_html(html_content):
 def clean_folders(base_folder):
     # 遍历base_folder下的每个子文件夹
     for root, dirs, files in os.walk(base_folder):
+        for filename in files:
+            # Check if the file name is 'package.content' or has extension '.pdsc'
+            if filename == 'package.content' or filename.endswith('.pdsc'):
+                file_path = os.path.join(root, filename)
+                # Delete the file
+                os.remove(file_path)
         # 检查当前文件夹中是否有'include'文件夹
         if 'include' in dirs: 
             # 遍历当前文件夹下的所有子文件夹
@@ -47,7 +53,7 @@ def clean_folders(base_folder):
                     shutil.rmtree(full_dir_path)
                     print(f"deleted folder: {full_dir_path}")
                     
-def download_and_extract(url, device_dir, cmsis_dir, cache_dir):
+def download_and_extract(url, atmel_dir, cmsis_dir, cache_dir):
     # 发送请求
     response = requests.get(url)
     if response.status_code == 200: 
@@ -55,7 +61,7 @@ def download_and_extract(url, device_dir, cmsis_dir, cache_dir):
         items = parse_html(response.text)
         atpack_links = [item for item in items if re.match(r'(^Atmel\.SAM)|(^ARM\.CMSIS)', item)] 
          
-        os.makedirs(device_dir,exist_ok=True)
+        os.makedirs(atmel_dir,exist_ok=True)
         os.makedirs(cmsis_dir,exist_ok=True)
         os.makedirs(cache_dir,exist_ok=True)
         # 下载并解压文件
@@ -64,30 +70,26 @@ def download_and_extract(url, device_dir, cmsis_dir, cache_dir):
             download_url = os.path.join(url, link)
             
             # 下载文件到临时目录
-            atpack_filename = os.path.basename(download_url)
-            atpack_path = os.path.join(cache_dir, atpack_filename)
+            atpack_name = os.path.basename(download_url)
+            atpack_path = os.path.join(cache_dir, atpack_name)
             # 如果文件不存在则下载
             if not os.path.exists(atpack_path):
                 with open(atpack_path, 'wb') as f:
                     print(f"download file: {download_url}")
                     f.write(requests.get(download_url).content)
                     
-            groups = re.search(r'[^.]+\.(.*?)\.(.+)\.atpack', atpack_filename)
+            groups = re.search(r'[^.]+\.(.*?)\.(.+)\.atpack', atpack_name)
             series = groups.group(1)
             version = groups.group(2)
             # 解压到指定目录的同名文件夹下
             with zipfile.ZipFile(atpack_path, 'r') as zip_ref:
-                series_dir = os.path.join(device_dir, series, version)
+                series_dir = os.path.join(atmel_dir, series, version)
                 if(series == "CMSIS"):
-                    series_dir = os.path.join(cmsis_dir, series, version)
+                    series_dir = os.path.join(cmsis_dir, version)
                 os.makedirs(series_dir,exist_ok=True)
                 zip_ref.extractall(series_dir)
                 print(f"create folder: {series_dir}")
  
-def generate_header(input_dir,output_dir):
-    #clean_folders(input_dir)
-    print(input_dir)
-
 def get_devices(pdsc_file):
     devices = []
     # 查找devices节点下的family节点
@@ -124,7 +126,7 @@ def get_devices(pdsc_file):
             device['family'] = atdf_root.find('.//devices/device').get('family')
             device['defines'] = {}
             for parame_node in atdf_root.find('.//devices/device/parameters').findall('param'):
-                device['defines'][parame_node.get('name')] = parame_node.get('value')
+                device['defines'][parame_node.get('name')] = parame_node.get('value') + 'U'
             devices.append(device)
     return devices
  
@@ -137,21 +139,18 @@ def get_all_devices(folder):
 
 
 if __name__ == "__main__":
-    
-  
+    cd = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.dirname(cd)
     parser = argparse.ArgumentParser(description='Download and extract files from a webpage.')
     parser.add_argument('--url', help='URL of the webpage to scrape', default='http://packs.download.atmel.com/')
-    parser.add_argument('--output', help='Output directory for extracted files', default='tools')
+    parser.add_argument('--output_atmel', help='Output directory for extracted atmel files', default= os.path.join(root, 'system', 'Atmel'))
+    parser.add_argument('--output_cmsis', help='Output directory for extracted cmsis files', default= os.path.join(root, 'system', 'CMSIS'))
     parser.add_argument('--cache', help='Web download cache', default='cache')
     args = parser.parse_args()
-    
-    # 检查输出目录是否存在，如果不存在则创建
-    if not os.path.exists(args.output):
-        os.makedirs(args.output)
-    
-    atmel = os.path.join(args.output, 'Atmel')
-    download_and_extract(args.url, atmel , args.output, "cache") 
-    a = get_all_devices(atmel)
+     
+    download_and_extract(args.url, args.output_atmel , args.output_cmsis, "cache") 
+    devices = get_all_devices(args.output_atmel)
+    clean_folders(args.output_atmel)
     with open("data.json", "w") as file:
-        file.write(json.dumps(a,indent=4))
+        file.write(json.dumps(devices,indent=4))
     #shutil.rmtree(temp_dir)
